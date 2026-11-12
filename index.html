@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Self-Chat" />
+  <title>Self-Chat · 85yo vs Present Osanda</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --ios-bg: #000000;
+      --ios-header: rgba(22, 22, 24, 0.86);
+      --ios-bubble-in: #262629;
+      --ios-bubble-out: #0A84FF;
+      --ios-border: rgba(255, 255, 255, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #09090b;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Custom Scrollbars inside phones */
+    .ios-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .ios-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .ios-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 9999px;
+    }
+
+    /* iPhone 12 Pro Chassis on Desktop */
+    @media (min-width: 860px) {
+      .phone-chassis {
+        width: 390px;
+        height: 844px;
+        max-height: calc(100vh - 88px);
+        border-radius: 52px;
+        border: 11px solid #1c1c1e;
+        box-shadow:
+          0 0 0 2px #3a3a3c,
+          0 30px 70px -15px rgba(0, 0, 0, 0.85);
+        position: relative;
+        overflow: hidden;
+        background: #000000;
+        flex-shrink: 0;
+      }
+      .phone-notch {
+        display: flex;
+      }
+    }
+
+    /* Fullscreen Native feel on actual mobile screens */
+    @media (max-width: 859px) {
+      .phone-chassis {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        border: none;
+        background: #000000;
+        position: relative;
+        overflow: hidden;
+      }
+      .phone-notch {
+        display: none;
+      }
+    }
+
+    /* Message Bubble Tails (iOS 18 style) */
+    .bubble-out {
+      background: linear-gradient(180deg, #1b8dff 0%, #0a84ff 100%);
+      color: #ffffff;
+      border-radius: 20px;
+      position: relative;
+    }
+    .bubble-out.has-tail {
+      border-bottom-right-radius: 5px;
+    }
+    .bubble-out.has-tail::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      right: -6px;
+      width: 12px;
+      height: 16px;
+      background: #0a84ff;
+      border-bottom-left-radius: 14px;
+      clip-path: path("M 0 0 Q 2 12 12 16 L 0 16 Z");
+    }
+
+    .bubble-in {
+      background-color: #262629;
+      color: #f5f5f7;
+      border-radius: 20px;
+      position: relative;
+    }
+    .bubble-in.has-tail {
+      border-bottom-left-radius: 5px;
+    }
+    .bubble-in.has-tail::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: -6px;
+      width: 12px;
+      height: 16px;
+      background: #262629;
+      border-bottom-right-radius: 14px;
+      clip-path: path("M 12 0 Q 10 12 0 16 L 12 16 Z");
+    }
+
+    /* Typing Indicator Dots */
+    @keyframes iosBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+    .typing-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: #a1a1aa;
+      animation: iosBounce 1.3s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.16s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.32s; }
+
+    /* Tapback Pop Animation (only triggered explicitly on newly added reactions) */
+    @keyframes popScale {
+      0% { transform: scale(0.4); opacity: 0; }
+      75% { transform: scale(1.15); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .tapback-pop {
+      animation: popScale 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* Glass Blur */
+    .ios-glass {
+      background: rgba(24, 24, 27, 0.84);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+    }
+  </style>
+</head>
+<body class="flex flex-col h-screen w-screen overflow-hidden bg-zinc-950">
+
+  <!-- LOGIN / ACCOUNT LOCK SCREEN -->
+  <div id="authScreen" class="fixed inset-0 z-50 bg-zinc-950 flex items-center justify-center p-5">
+    <div class="w-full max-w-sm bg-zinc-900/95 border border-white/10 rounded-[32px] p-7 shadow-2xl">
+      <div class="flex flex-col items-center text-center mb-6">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg mb-3">
+          85
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-white">Self-Chat Journal</h1>
+        <p id="authSubtitle" class="text-xs text-zinc-400 mt-1">Sign in to sync your 85yo &amp; Present Osanda threads across devices</p>
+      </div>
+
+      <form id="authForm" class="space-y-3.5">
+        <div>
+          <label class="block text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-1 ml-1">Email</label>
+          <input id="authEmail" type="email" required autocomplete="email" placeholder="osanda@example.com" class="w-full bg-zinc-950/90 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500 transition" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-medium text-zinc-400 uppercase tracking-wider mb-1 ml-1">Password</label>
+          <input id="authPassword" type="password" required minlength="6" autocomplete="current-password" placeholder="••••••••" class="w-full bg-zinc-950/90 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-sky-500 transition" />
+        </div>
+
+        <p id="authError" class="hidden text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-2"></p>
+
+        <button id="authSubmitBtn" type="submit" class="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 active:scale-[0.99] text-white font-semibold text-sm transition shadow-md shadow-sky-500/20">
+          Sign In
+        </button>
+      </form>
+
+      <div class="mt-5 pt-4 border-t border-white/10 text-center">
+        <button id="toggleAuthModeBtn" type="button" class="text-xs text-sky-400 hover:text-sky-300 font-medium transition">
+          First time? Create your private account
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP WORKSPACE BAR (Centered View Switcher) -->
+  <header id="workspaceToolbar" class="w-full h-14 px-4 border-b border-white/10 bg-zinc-950/95 grid grid-cols-[1fr_auto_1fr] items-center shrink-0 z-30">
+    <!-- Left Status -->
+    <div class="flex items-center gap-2 min-w-0">
+      <span id="syncDot" class="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Sync status"></span>
+      <span id="syncLabel" class="text-xs text-zinc-400 truncate hidden sm:inline">Connecting...</span>
+    </div>
+
+    <!-- Center Segmented Switcher -->
+    <div class="flex items-center justify-center">
+      <div class="inline-flex items-center bg-zinc-900 border border-white/10 rounded-full p-1 shadow-inner">
+        <button id="btnViewDual" data-mode="dual" class="view-tab hidden md:inline-flex px-3.5 py-1 rounded-full text-xs font-semibold transition-all bg-zinc-700 text-white shadow">
+          Dual View
+        </button>
+        <button id="btnView85" data-mode="85yo" class="view-tab px-3.5 py-1 rounded-full text-xs font-semibold transition-all text-zinc-400 hover:text-white">
+          85yo Osanda
+        </button>
+        <button id="btnViewPresent" data-mode="present" class="view-tab px-3.5 py-1 rounded-full text-xs font-semibold transition-all text-zinc-400 hover:text-white">
+          Present Osanda
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Quick Actions -->
+    <div class="flex items-center justify-end gap-2">
+      <button id="btnGlobalNewThread" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-500/15 hover:bg-sky-500/25 text-sky-400 text-xs font-semibold border border-sky-500/25 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        <span class="hidden sm:inline">New Thread</span>
+      </button>
+      <button id="btnSignOut" title="Sign Out" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white text-xs font-medium border border-white/10 transition">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+        <span class="hidden lg:inline">Sign Out</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN DUAL-PHONE STAGE -->
+  <main id="phonesStage" class="flex-1 w-full flex items-center justify-center gap-7 px-0 md:px-6 py-0 md:py-4 overflow-hidden relative">
+    <!-- Left Phone: 85yo Osanda -->
+    <section id="shell-85yo" class="phone-chassis flex flex-col"></section>
+
+    <!-- Right Phone: Present Osanda -->
+    <section id="shell-present" class="phone-chassis flex flex-col"></section>
+  </main>
+
+  <!-- TAPBACK & MESSAGE CONTEXT POPOVER -->
+  <div id="tapbackOverlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div id="tapbackCard" class="w-full max-w-xs bg-zinc-900/95 border border-white/15 rounded-3xl p-4 shadow-2xl space-y-3">
+      <div class="text-[11px] uppercase tracking-wider text-zinc-400 font-semibold text-center">Tapback Reaction</div>
+      <div class="flex items-center justify-between bg-zinc-800/90 rounded-full px-3 py-2 border border-white/10">
+        <button data-emoji="❤️" class="tapback-choice text-2xl hover:scale-125 transition-transform">❤️</button>
+        <button data-emoji="👍" class="tapback-choice text-2xl hover:scale-125 transition-transform">👍</button>
+        <button data-emoji="👎" class="tapback-choice text-2xl hover:scale-125 transition-transform">👎</button>
+        <button data-emoji="😂" class="tapback-choice text-2xl hover:scale-125 transition-transform">😂</button>
+        <button data-emoji="‼️" class="tapback-choice text-2xl hover:scale-125 transition-transform">‼️</button>
+        <button data-emoji="❓" class="tapback-choice text-2xl hover:scale-125 transition-transform">❓</button>
+      </div>
+      <div class="divide-y divide-white/10 bg-zinc-800/70 rounded-2xl overflow-hidden text-sm">
+        <button id="ctxReplyBtn" class="w-full px-4 py-2.5 text-left text-white hover:bg-white/10 flex items-center justify-between">
+          <span>Reply</span>
+          <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/></svg>
+        </button>
+        <button id="ctxCopyBtn" class="w-full px-4 py-2.5 text-left text-white hover:bg-white/10 flex items-center justify-between">
+          <span>Copy Text</span>
+          <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        </button>
+        <button id="ctxDeleteBtn" class="w-full px-4 py-2.5 text-left text-rose-400 hover:bg-rose-500/10 flex items-center justify-between">
+          <span>Delete Message</span>
+          <svg class="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>
+      <button id="ctxCancelBtn" class="w-full py-2 text-xs font-semibold text-zinc-400 hover:text-white">Cancel</button>
+    </div>
+  </div>
+
+  <!-- NEW THREAD MODAL -->
+  <div id="newThreadModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+    <div class="w-full max-w-sm bg-zinc-900 border border-white/15 rounded-3xl p-5 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">New Accountability Thread</h3>
+        <button id="closeNewThreadModal" class="text-zinc-400 hover:text-white text-sm">✕</button>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Thread Title / Goal</label>
+          <input id="newThreadTitleInput" type="text" placeholder="e.g. Deep Work & Health Check-in" class="w-full bg-zinc-950 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500" />
+        </div>
+        <div>
+          <label class="block text-xs text-zinc-400 mb-1">Optional Opening Message (leave blank for empty chat)</label>
+          <textarea id="newThreadOpeningInput" rows="2" placeholder="Leave empty to start completely blank..." class="w-full bg-zinc-950 border border-white/15 rounded-xl px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-sky-500 resize-none"></textarea>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button id="cancelNewThreadBtn" class="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white">Cancel</button>
+        <button id="confirmNewThreadBtn" class="px-4 py-2 rounded-xl text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-white">Create Thread</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HIDDEN FILE INPUTS FOR CAMERA / PHOTOS / AUDIO -->
+  <input id="filePhotoInput" type="file" accept="image/*" class="hidden" />
+  <input id="fileCameraInput" type="file" accept="image/*" capture="environment" class="hidden" />
+  <input id="fileAudioInput" type="file" accept="audio/*" class="hidden" />
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      collection,
+      doc,
+      setDoc,
+      updateDoc,
+      deleteDoc,
+      onSnapshot,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Your Firebase Project Configuration
+    const fallbackConfig = {
+      apiKey: "AIzaSyAE9viTJrvpLoyjRj6qrOf41C9IbVpWAyo",
+      authDomain: "self-chat-journal.firebaseapp.com",
+      projectId: "self-chat-journal",
+      storageBucket: "self-chat-journal.firebasestorage.app",
+      messagingSenderId: "353079069301",
+      appId: "1:353079069301:web:8ce30bd817fb63e09fc63c",
+      measurementId: "G-16GT3ZF7V5"
+    };
+
+    const firebaseConfig = typeof __firebase_config !== "undefined"
+      ? JSON.parse(__firebase_config)
+      : fallbackConfig;
+
+    const appId = typeof __app_id !== "undefined" ? __app_id : "self-chat-osanda";
+
+    // App State
+    const state = {
+      viewMode: window.innerWidth >= 860 ? "dual" : "present",
+      screen: { "85yo": "chat", "present": "chat" },
+      threads: [],
+      activeThreadId: "default-thread",
+      messages: [],
+      typingBy: { "85yo": false, "present": false },
+      replyingTo: { "85yo": null, "present": null },
+      plusMenuOpen: { "85yo": false, "present": false },
+      activeMediaRole: "present",
+      contextTarget: null,
+      animateTapbackMsgId: null,
+      user: null,
+      db: null,
+      auth: null,
+      cloudReady: false,
+      isSignUpMode: false,
+      unsubThreads: null,
+      unsubMessages: null
+    };
+
+    const ROLES = {
+      "85yo": {
+        id: "85yo",
+        selfName: "85yo Osanda",
+        peerName: "Present Osanda",
+        peerBadge: "20s",
+        peerAvatarBg: "from-sky-500 to-blue-600",
+        peerSubtitle: "Present Self · iMessage"
+      },
+      "present": {
+        id: "present",
+        selfName: "Present Osanda",
+        peerName: "85yo Osanda",
+        peerBadge: "85",
+        peerAvatarBg: "from-amber-500 to-orange-600",
+        peerSubtitle: "Future Self · iMessage"
+      }
+    };
+
+    // DOM Helpers
+    const $ = (sel, root = document) => root.querySelector(sel);
+    const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function formatTime(ts) {
+      if (!ts) return "Just now";
+      const d = typeof ts === "number" ? new Date(ts) : (ts.toDate ? ts.toDate() : new Date());
+      return d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    }
+
+    function setSyncStatus(status, text) {
+      const dot = $("#syncDot");
+      const label = $("#syncLabel");
+      if (dot) {
+        dot.className = "w-2 h-2 rounded-full shrink-0 " + (
+          status === "online" ? "bg-emerald-400" :
+          status === "local" ? "bg-sky-400" : "bg-amber-400"
+        );
+      }
+      if (label) label.textContent = text;
+    }
+
+    // Build Static Phone Shell Once (Prevents re-mount & animation glitches)
+    function buildPhoneShell(roleKey) {
+      const role = ROLES[roleKey];
+      const shell = $(`#shell-${roleKey}`);
+      shell.innerHTML = `
+        <!-- iOS Status Bar -->
+        <div class="h-11 px-6 pt-2 flex items-center justify-between text-[12px] font-semibold text-white shrink-0 z-20 select-none bg-black">
+          <span class="ios-clock">9:41</span>
+          <div class="phone-notch hidden w-28 h-6 bg-black rounded-b-2xl border-x border-b border-zinc-800/80 items-center justify-center">
+            <div class="w-12 h-1 rounded-full bg-zinc-800"></div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2 18h2v2H2v-2zm4-4h2v6H6v-6zm4-4h2v10h-2V10zm4-4h2v14h-2V6zm4-4h2v18h-2V2z"/></svg>
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 18c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zm-4.9-2.3l1.4 1.4C9.4 16.4 10.6 16 12 16s2.6.4 3.5 1.1l1.4-1.4C15.6 14.6 13.9 14 12 14s-3.6.6-4.9 1.7zm-2.8-2.8l1.4 1.4C7.3 13 9.5 12 12 12s4.7 1 6.3 2.3l1.4-1.4C17.7 11.1 15 10 12 10s-5.7 1.1-7.7 2.9z"/></svg>
+            <div class="w-5 h-2.5 border border-white/60 rounded-[3px] p-[1px] flex items-center">
+              <div class="w-full h-full bg-white rounded-[1px]"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- THREADS INBOX LIST VIEW -->
+        <div id="inboxView-${roleKey}" class="hidden flex-1 flex flex-col bg-black overflow-hidden">
+          <div class="px-5 pt-2 pb-3 border-b border-white/10 flex items-center justify-between">
+            <h2 class="text-2xl font-bold tracking-tight text-white">Messages</h2>
+            <button data-action="open-new-thread" class="w-8 h-8 rounded-full bg-zinc-900 hover:bg-zinc-800 text-sky-400 flex items-center justify-center transition" title="New Thread">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>
+            </button>
+          </div>
+          <div id="threadList-${roleKey}" class="flex-1 overflow-y-auto ios-scroll divide-y divide-white/10 px-4"></div>
+        </div>
+
+        <!-- ACTIVE CHAT VIEW -->
+        <div id="chatView-${roleKey}" class="flex-1 flex flex-col bg-black overflow-hidden relative">
+          <!-- iOS Navigation Header -->
+          <div class="ios-glass border-b border-white/10 px-3 py-2 flex items-center justify-between shrink-0 z-10">
+            <button data-action="show-inbox" data-role="${roleKey}" class="flex items-center gap-0.5 text-sky-400 hover:text-sky-300 text-sm font-medium px-1 py-1">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+              <span>Threads</span>
+            </button>
+
+            <div class="flex flex-col items-center">
+              <div class="w-9 h-9 rounded-full bg-gradient-to-br ${role.peerAvatarBg} flex items-center justify-center text-xs font-bold text-white shadow">
+                ${role.peerBadge}
+              </div>
+              <div class="flex items-center gap-1 mt-0.5">
+                <span class="text-[11px] font-semibold text-white">${role.peerName}</span>
+                <svg class="w-2.5 h-2.5 text-zinc-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+              </div>
+            </div>
+
+            <div class="w-16 flex justify-end">
+              <span id="threadBadge-${roleKey}" class="text-[10px] text-zinc-400 bg-zinc-900 border border-white/10 px-2 py-0.5 rounded-full truncate max-w-[68px]">Journal</span>
+            </div>
+          </div>
+
+          <!-- Messages Scroll Container -->
+          <div id="msgScroll-${roleKey}" class="flex-1 overflow-y-auto ios-scroll px-3.5 py-3 flex flex-col">
+            <div class="text-center my-2">
+              <span class="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">iMessage · Accountability Log</span>
+            </div>
+            <div id="msgItems-${roleKey}" class="flex flex-col space-y-1.5"></div>
+
+            <!-- Dedicated Typing Indicator Row (Isolated from msgItems so keystrokes never re-render bubbles) -->
+            <div id="typingRow-${roleKey}" class="hidden mt-2 flex items-end gap-2">
+              <div class="bubble-in has-tail px-3.5 py-2.5 inline-flex items-center gap-1">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reply Preview Banner -->
+          <div id="replyBanner-${roleKey}" class="hidden px-3.5 py-2 bg-zinc-900/95 border-t border-white/10 flex items-center justify-between text-xs">
+            <div class="truncate pr-2">
+              <span class="text-zinc-400">Replying to: </span>
+              <span id="replyBannerText-${roleKey}" class="text-white font-medium"></span>
+            </div>
+            <button data-action="cancel-reply" data-role="${roleKey}" class="text-zinc-400 hover:text-white px-1">✕</button>
+          </div>
+
+          <!-- Plus Attachment Popover Menu -->
+          <div id="plusMenu-${roleKey}" class="hidden absolute bottom-16 left-3 z-20 bg-zinc-900/95 backdrop-blur-xl border border-white/15 rounded-2xl p-1.5 shadow-2xl w-44 space-y-0.5">
+            <button data-action="pick-media" data-media="camera" data-role="${roleKey}" class="w-full px-3 py-2 rounded-xl hover:bg-white/10 flex items-center gap-2.5 text-xs font-medium text-white">
+              <span class="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center">📷</span>
+              <span>Camera</span>
+            </button>
+            <button data-action="pick-media" data-media="photos" data-role="${roleKey}" class="w-full px-3 py-2 rounded-xl hover:bg-white/10 flex items-center gap-2.5 text-xs font-medium text-white">
+              <span class="w-6 h-6 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center">🖼️</span>
+              <span>Photos</span>
+            </button>
+            <button data-action="pick-media" data-media="audio" data-role="${roleKey}" class="w-full px-3 py-2 rounded-xl hover:bg-white/10 flex items-center gap-2.5 text-xs font-medium text-white">
+              <span class="w-6 h-6 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center">🎙️</span>
+              <span>Audio Note</span>
+            </button>
+          </div>
+
+          <!-- iOS Input Bar -->
+          <div class="ios-glass border-t border-white/10 px-3 py-2 pb-5 md:pb-3 flex items-end gap-2 shrink-0">
+            <button data-action="toggle-plus" data-role="${roleKey}" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-300 flex items-center justify-center shrink-0 mb-0.5 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            </button>
+
+            <div class="flex-1 bg-zinc-900 border border-white/15 rounded-2xl px-3 py-1.5 flex items-end gap-2">
+              <textarea
+                id="chatInput-${roleKey}"
+                data-role="${roleKey}"
+                rows="1"
+                placeholder="iMessage"
+                class="w-full bg-transparent text-[14px] text-white placeholder-zinc-500 focus:outline-none resize-none max-h-24 leading-5"
+              ></textarea>
+              <button
+                id="sendBtn-${roleKey}"
+                data-action="send-msg"
+                data-role="${roleKey}"
+                class="w-7 h-7 rounded-full bg-sky-500 hover:bg-sky-400 disabled:opacity-35 text-white flex items-center justify-center shrink-0 transition"
+                disabled
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Update View Layout without re-mounting DOM
+    function applyViewMode() {
+      const shell85 = $("#shell-85yo");
+      const shellPresent = $("#shell-present");
+
+      $$(".view-tab").forEach((btn) => {
+        const active = btn.dataset.mode === state.viewMode;
+        btn.className = `view-tab ${btn.dataset.mode === "dual" ? "hidden md:inline-flex" : ""} px-3.5 py-1 rounded-full text-xs font-semibold transition-all ${
+          active ? "bg-zinc-700 text-white shadow" : "text-zinc-400 hover:text-white"
+        }`;
+      });
+
+      if (state.viewMode === "dual") {
+        shell85.style.display = "flex";
+        shellPresent.style.display = "flex";
+      } else if (state.viewMode === "85yo") {
+        shell85.style.display = "flex";
+        shellPresent.style.display = "none";
+      } else {
+        shell85.style.display = "none";
+        shellPresent.style.display = "flex";
+      }
+    }
+
+    function renderScreenVisibility(roleKey) {
+      const isInbox = state.screen[roleKey] === "inbox";
+      const inboxEl = $(`#inboxView-${roleKey}`);
+      const chatEl = $(`#chatView-${roleKey}`);
+      if (inboxEl && chatEl) {
+        inboxEl.classList.toggle("hidden", !isInbox);
+        chatEl.classList.toggle("hidden", isInbox);
+      }
+    }
+
+    function renderThreadList(roleKey) {
+      const container = $(`#threadList-${roleKey}`);
+      if (!container) return;
+
+      if (state.threads.length === 0) {
+        container.innerHTML = `<div class="py-12 text-center text-xs text-zinc-500">No threads yet. Tap the compose icon above to start one.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.threads
+        .map((t) => {
+          const isActive = t.id === state.activeThreadId;
+          return `
+            <div data-action="select-thread" data-thread-id="${t.id}" data-role="${roleKey}" class="py-3.5 flex items-center justify-between cursor-pointer hover:bg-white/5 px-2 rounded-xl transition ${isActive ? "bg-white/5" : ""}">
+              <div class="min-w-0 pr-3">
+                <div class="flex items-center gap-2">
+                  <span class="w-2 h-2 rounded-full ${isActive ? "bg-sky-400" : "bg-zinc-700"}"></span>
+                  <p class="text-sm font-semibold text-white truncate">${escapeHtml(t.title)}</p>
+                </div>
+                <p class="text-xs text-zinc-400 truncate mt-0.5 pl-4">${escapeHtml(t.lastPreview || "Empty thread")}</p>
+              </div>
+              <span class="text-[11px] text-zinc-500 shrink-0">${formatTime(t.updatedAt)}</span>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function renderMessagesForRole(roleKey) {
+      const container = $(`#msgItems-${roleKey}`);
+      if (!container) return;
+
+      const activeThread = state.threads.find((t) => t.id === state.activeThreadId);
+      const badge = $(`#threadBadge-${roleKey}`);
+      if (badge) badge.textContent = activeThread ? activeThread.title : "Journal";
+
+      const threadMsgs = state.messages.filter((m) => m.threadId === state.activeThreadId);
+
+      if (threadMsgs.length === 0) {
+        container.innerHTML = `
+          <div class="my-12 text-center px-6">
+            <p class="text-xs text-zinc-500">Clean slate. Send a message from either phone to begin your conversation.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = threadMsgs
+        .map((msg, idx) => {
+          const isMine = msg.sender === roleKey;
+          const nextMsg = threadMsgs[idx + 1];
+          const isLastInGroup = !nextMsg || nextMsg.sender !== msg.sender;
+          const shouldAnimateTapback = state.animateTapbackMsgId === msg.id;
+
+          let mediaHtml = "";
+          if (msg.imageUrl) {
+            mediaHtml = `<img src="${msg.imageUrl}" alt="Attachment" class="rounded-2xl max-h-56 w-auto object-cover mb-1 border border-white/10" />`;
+          } else if (msg.audioName) {
+            mediaHtml = `
+              <div class="flex items-center gap-2 py-1 px-1">
+                <span class="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">🎙️</span>
+                <div class="text-xs">
+                  <div class="font-semibold">Audio Note</div>
+                  <div class="opacity-75 text-[11px] truncate max-w-[150px]">${escapeHtml(msg.audioName)}</div>
+                </div>
+              </div>
+            `;
+          }
+
+          const replyQuoteHtml = msg.replyToText
+            ? `<div class="text-[11px] text-zinc-400 bg-zinc-900/90 border border-white/10 rounded-xl px-2.5 py-1 mb-1 max-w-[230px] truncate">
+                 ↳ ${escapeHtml(msg.replyToText)}
+               </div>`
+            : "";
+
+          const tapbackHtml = msg.tapback
+            ? `<div class="${shouldAnimateTapback ? "tapback-pop" : ""} absolute -top-3 ${isMine ? "-left-2" : "-right-2"} w-6 h-6 rounded-full bg-zinc-800 border border-white/20 shadow-md flex items-center justify-center text-xs z-10">
+                 ${msg.tapback}
+               </div>`
+            : "";
+
+          const receiptHtml = isMine && idx === threadMsgs.length - 1
+            ? `<div class="text-[10px] text-zinc-500 mt-1 text-right pr-1">Delivered · ${formatTime(msg.createdAt)}</div>`
+            : "";
+
+          return `
+            <div class="flex flex-col ${isMine ? "items-end" : "items-start"} ${isLastInGroup ? "mb-2" : "mb-0.5"}">
+              ${replyQuoteHtml}
+              <div
+                data-action="open-context"
+                data-msg-id="${msg.id}"
+                class="relative max-w-[78%] px-3.5 py-2 text-[14px] leading-[1.38] cursor-pointer select-text ${
+                  isMine ? "bubble-out" : "bubble-in"
+                } ${isLastInGroup ? "has-tail" : ""}"
+              >
+                ${tapbackHtml}
+                ${mediaHtml}
+                ${msg.text ? `<div class="whitespace-pre-wrap break-words">${escapeHtml(msg.text)}</div>` : ""}
+              </div>
+              ${receiptHtml}
+            </div>
+          `;
+        })
+        .join("");
+
+      const scroller = $(`#msgScroll-${roleKey}`);
+      if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    }
+
+    function updateTypingIndicator(targetRoleKey, isTyping) {
+      const row = $(`#typingRow-${targetRoleKey}`);
+      if (!row) return;
+      row.classList.toggle("hidden", !isTyping);
+      if (isTyping) {
+        const scroller = $(`#msgScroll-${targetRoleKey}`);
+        if (scroller) scroller.scrollTop = scroller.scrollHeight;
+      }
+    }
+
+    function renderAll() {
+      ["85yo", "present"].forEach((r) => {
+        renderScreenVisibility(r);
+        renderThreadList(r);
+        renderMessagesForRole(r);
+      });
+      state.animateTapbackMsgId = null;
+    }
+
+    // Cloud & Local Persistence Helpers
+    function getStorageKey() {
+      return state.user ? `selfchat_data_${state.user.uid}` : "selfchat_data_guest";
+    }
+
+    function saveLocalBackup() {
+      try {
+        localStorage.setItem(
+          getStorageKey(),
+          JSON.stringify({
+            threads: state.threads,
+            messages: state.messages,
+            activeThreadId: state.activeThreadId
+          })
+        );
+      } catch (e) {
+        console.warn("Local backup skipped:", e);
+      }
+    }
+
+    function loadLocalBackup() {
+      try {
+        const raw = localStorage.getItem(getStorageKey());
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.threads = parsed.threads || [];
+          state.messages = parsed.messages || [];
+          state.activeThreadId = parsed.activeThreadId || "default-thread";
+        }
+      } catch (e) {
+        console.warn("Local load failed:", e);
+      }
+    }
+
+    async function ensureDefaultThread() {
+      if (state.threads.length === 0) {
+        const defaultThread = {
+          id: "default-thread",
+          title: "Daily Accountability",
+          lastPreview: "",
+          updatedAt: Date.now()
+        };
+        state.threads = [defaultThread];
+        state.activeThreadId = defaultThread.id;
+        saveLocalBackup();
+        if (state.cloudReady && state.user) {
+          await setDoc(
+            doc(state.db, "artifacts", appId, "users", state.user.uid, "threads", defaultThread.id),
+            defaultThread
+          );
+        }
+      }
+    }
+
+    async function sendMessage(senderRole, payload) {
+      const msgId = "msg_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+      const replyObj = state.replyingTo[senderRole];
+      const msg = {
+        id: msgId,
+        threadId: state.activeThreadId,
+        sender: senderRole,
+        text: payload.text || "",
+        imageUrl: payload.imageUrl || null,
+        audioName: payload.audioName || null,
+        replyToText: replyObj ? (replyObj.text || "Attachment") : null,
+        tapback: null,
+        createdAt: Date.now()
+      };
+
+      // Clear reply state
+      state.replyingTo[senderRole] = null;
+      $(`#replyBanner-${senderRole}`).classList.add("hidden");
+
+      // Stop typing indicator on opposite phone
+      const otherRole = senderRole === "85yo" ? "present" : "85yo";
+      state.typingBy[senderRole] = false;
+      updateTypingIndicator(otherRole, false);
+
+      // Optimistic local update
+      state.messages.push(msg);
+      const tIdx = state.threads.findIndex((t) => t.id === state.activeThreadId);
+      if (tIdx !== -1) {
+        state.threads[tIdx].lastPreview = msg.text || (msg.imageUrl ? "📷 Photo" : "🎙️ Audio Note");
+        state.threads[tIdx].updatedAt = msg.createdAt;
+      }
+      saveLocalBackup();
+      renderAll();
+
+      // Sync to Firestore
+      if (state.cloudReady && state.user) {
+        try {
+          await setDoc(
+            doc(state.db, "artifacts", appId, "users", state.user.uid, "messages", msg.id),
+            msg
+          );
+          if (tIdx !== -1) {
+            await setDoc(
+              doc(state.db, "artifacts", appId, "users", state.user.uid, "threads", state.activeThreadId),
+              state.threads[tIdx],
+              { merge: true }
+            );
+          }
+        } catch (err) {
+          console.error("Cloud sync error:", err);
+        }
+      }
+    }
+
+    async function setTapback(msgId, emoji) {
+      const msg = state.messages.find((m) => m.id === msgId);
+      if (!msg) return;
+      const nextEmoji = msg.tapback === emoji ? null : emoji;
+      msg.tapback = nextEmoji;
+      state.animateTapbackMsgId = nextEmoji ? msgId : null;
+      saveLocalBackup();
+      renderAll();
+
+      if (state.cloudReady && state.user) {
+        try {
+          await updateDoc(
+            doc(state.db, "artifacts", appId, "users", state.user.uid, "messages", msgId),
+            { tapback: nextEmoji }
+          );
+        } catch (err) {
+          console.error("Tapback sync error:", err);
+        }
+      }
+    }
+
+    async function deleteMessage(msgId) {
+      state.messages = state.messages.filter((m) => m.id !== msgId);
+      saveLocalBackup();
+      renderAll();
+
+      if (state.cloudReady && state.user) {
+        try {
+          await deleteDoc(
+            doc(state.db, "artifacts", appId, "users", state.user.uid, "messages", msgId)
+          );
+        } catch (err) {
+          console.error("Delete sync error:", err);
+        }
+      }
+    }
+
+    // Compress image attachment so it stores cleanly in Firestore
+    function compressImageFile(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const maxDim = 720;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxDim || h > maxDim) {
+              if (w > h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", 0.72));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Subscribe to User's Private Firestore Data
+    function startCloudListeners(user) {
+      if (state.unsubThreads) state.unsubThreads();
+      if (state.unsubMessages) state.unsubMessages();
+
+      const threadsCol = collection(state.db, "artifacts", appId, "users", user.uid, "threads");
+      const msgsCol = collection(state.db, "artifacts", appId, "users", user.uid, "messages");
+
+      state.unsubThreads = onSnapshot(
+        threadsCol,
+        async (snap) => {
+          const list = [];
+          snap.forEach((d) => list.push(d.data()));
+          list.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+          if (list.length > 0) {
+            state.threads = list;
+            if (!state.threads.some((t) => t.id === state.activeThreadId)) {
+              state.activeThreadId = state.threads[0].id;
+            }
+            saveLocalBackup();
+            renderAll();
+          } else {
+            await ensureDefaultThread();
+            renderAll();
+          }
+          setSyncStatus("online", `Synced · ${user.email}`);
+        },
+        (err) => {
+          console.warn("Firestore threads listener:", err);
+          setSyncStatus("local", "Local Backup Active");
+        }
+      );
+
+      state.unsubMessages = onSnapshot(
+        msgsCol,
+        (snap) => {
+          const list = [];
+          snap.forEach((d) => list.push(d.data()));
+          list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+          state.messages = list;
+          saveLocalBackup();
+          renderAll();
+        },
+        (err) => {
+          console.warn("Firestore messages listener:", err);
+        }
+      );
+    }
+
+    // Initialize App & Auth
+    function initApp() {
+      buildPhoneShell("85yo");
+      buildPhoneShell("present");
+      applyViewMode();
+
+      // Live iOS Clock
+      const updateClock = () => {
+        const now = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+        $$(".ios-clock").forEach((el) => (el.textContent = now));
+      };
+      updateClock();
+      setInterval(updateClock, 15000);
+
+      // Initialize Firebase
+      try {
+        const app = initializeApp(firebaseConfig);
+        state.auth = getAuth(app);
+        state.db = getFirestore(app);
+        state.cloudReady = true;
+
+        onAuthStateChanged(state.auth, async (user) => {
+          const authScreen = $("#authScreen");
+          if (user) {
+            state.user = user;
+            authScreen.classList.add("hidden");
+            loadLocalBackup();
+            await ensureDefaultThread();
+            renderAll();
+            startCloudListeners(user);
+          } else {
+            state.user = null;
+            if (state.unsubThreads) state.unsubThreads();
+            if (state.unsubMessages) state.unsubMessages();
+            authScreen.classList.remove("hidden");
+            setSyncStatus("offline", "Signed Out");
+          }
+        });
+      } catch (e) {
+        console.error("Firebase init failed:", e);
+        $("#authScreen").classList.add("hidden");
+        setSyncStatus("local", "Local Mode");
+        loadLocalBackup();
+        ensureDefaultThread().then(renderAll);
+      }
+
+      bindEvents();
+    }
+
+    function bindEvents() {
+      // Auth Form Toggle & Submit
+      $("#toggleAuthModeBtn").addEventListener("click", () => {
+        state.isSignUpMode = !state.isSignUpMode;
+        $("#authSubmitBtn").textContent = state.isSignUpMode ? "Create Private Account" : "Sign In";
+        $("#toggleAuthModeBtn").textContent = state.isSignUpMode
+          ? "Already have an account? Sign In"
+          : "First time? Create your private account";
+        $("#authError").classList.add("hidden");
+      });
+
+      $("#authForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const email = $("#authEmail").value.trim();
+        const password = $("#authPassword").value;
+        const errBox = $("#authError");
+        const btn = $("#authSubmitBtn");
+
+        errBox.classList.add("hidden");
+        btn.disabled = true;
+        btn.textContent = state.isSignUpMode ? "Creating account..." : "Signing in...";
+
+        try {
+          if (state.isSignUpMode) {
+            await createUserWithEmailAndPassword(state.auth, email, password);
+          } else {
+            await signInWithEmailAndPassword(state.auth, email, password);
+          }
+        } catch (err) {
+          errBox.textContent = err.message.replace("Firebase: ", "");
+          errBox.classList.remove("hidden");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = state.isSignUpMode ? "Create Private Account" : "Sign In";
+        }
+      });
+
+      $("#btnSignOut").addEventListener("click", async () => {
+        if (state.auth) {
+          await signOut(state.auth);
+        }
+      });
+
+      // Top View Switcher
+      $$(".view-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.viewMode = btn.dataset.mode;
+          applyViewMode();
+        });
+      });
+
+      // Typing & Send Handlers on Both Phones
+      ["85yo", "present"].forEach((roleKey) => {
+        const input = $(`#chatInput-${roleKey}`);
+        const sendBtn = $(`#sendBtn-${roleKey}`);
+        const otherRole = roleKey === "85yo" ? "present" : "85yo";
+
+        input.addEventListener("input", () => {
+          input.style.height = "auto";
+          input.style.height = Math.min(input.scrollHeight, 96) + "px";
+          const hasText = input.value.trim().length > 0;
+          sendBtn.disabled = !hasText;
+
+          if (state.typingBy[roleKey] !== hasText) {
+            state.typingBy[roleKey] = hasText;
+            updateTypingIndicator(otherRole, hasText);
+          }
+        });
+
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (input.value.trim()) {
+              const text = input.value.trim();
+              input.value = "";
+              input.style.height = "auto";
+              sendBtn.disabled = true;
+              sendMessage(roleKey, { text });
+            }
+          }
+        });
+      });
+
+      // Global Delegated Clicks
+      document.addEventListener("click", (e) => {
+        const target = e.target.closest("[data-action]");
+        if (!target) return;
+        const action = target.dataset.action;
+        const role = target.dataset.role;
+
+        if (action === "send-msg") {
+          const input = $(`#chatInput-${role}`);
+          const text = input.value.trim();
+          if (!text) return;
+          input.value = "";
+          input.style.height = "auto";
+          $(`#sendBtn-${role}`).disabled = true;
+          sendMessage(role, { text });
+        } else if (action === "show-inbox") {
+          state.screen[role] = "inbox";
+          renderScreenVisibility(role);
+          renderThreadList(role);
+        } else if (action === "select-thread") {
+          state.activeThreadId = target.dataset.threadId;
+          state.screen["85yo"] = "chat";
+          state.screen["present"] = "chat";
+          saveLocalBackup();
+          renderAll();
+        } else if (action === "open-new-thread") {
+          $("#newThreadTitleInput").value = "";
+          $("#newThreadOpeningInput").value = "";
+          $("#newThreadModal").classList.remove("hidden");
+          $("#newThreadModal").classList.add("flex");
+        } else if (action === "toggle-plus") {
+          state.plusMenuOpen[role] = !state.plusMenuOpen[role];
+          $(`#plusMenu-${role}`).classList.toggle("hidden", !state.plusMenuOpen[role]);
+        } else if (action === "pick-media") {
+          state.activeMediaRole = role;
+          state.plusMenuOpen[role] = false;
+          $(`#plusMenu-${role}`).classList.add("hidden");
+          const mediaType = target.dataset.media;
+          if (mediaType === "camera") $("#fileCameraInput").click();
+          if (mediaType === "photos") $("#filePhotoInput").click();
+          if (mediaType === "audio") $("#fileAudioInput").click();
+        } else if (action === "open-context") {
+          const msgId = target.dataset.msgId;
+          const msg = state.messages.find((m) => m.id === msgId);
+          if (!msg) return;
+          state.contextTarget = msg;
+          $("#tapbackOverlay").classList.remove("hidden");
+          $("#tapbackOverlay").classList.add("flex");
+        } else if (action === "cancel-reply") {
+          state.replyingTo[role] = null;
+          $(`#replyBanner-${role}`).classList.add("hidden");
+        }
+      });
+
+      // Global New Thread Button
+      $("#btnGlobalNewThread").addEventListener("click", () => {
+        $("#newThreadTitleInput").value = "";
+        $("#newThreadOpeningInput").value = "";
+        $("#newThreadModal").classList.remove("hidden");
+        $("#newThreadModal").classList.add("flex");
+      });
+
+      $("#closeNewThreadModal").addEventListener("click", () => {
+        $("#newThreadModal").classList.add("hidden");
+        $("#newThreadModal").classList.remove("flex");
+      });
+      $("#cancelNewThreadBtn").addEventListener("click", () => {
+        $("#newThreadModal").classList.add("hidden");
+        $("#newThreadModal").classList.remove("flex");
+      });
+
+      $("#confirmNewThreadBtn").addEventListener("click", async () => {
+        const title = $("#newThreadTitleInput").value.trim() || "New Check-in";
+        const opening = $("#newThreadOpeningInput").value.trim();
+        const newThread = {
+          id: "thread_" + Date.now(),
+          title,
+          lastPreview: opening || "",
+          updatedAt: Date.now()
+        };
+
+        state.threads.unshift(newThread);
+        state.activeThreadId = newThread.id;
+        state.screen["85yo"] = "chat";
+        state.screen["present"] = "chat";
+
+        $("#newThreadModal").classList.add("hidden");
+        $("#newThreadModal").classList.remove("flex");
+
+        saveLocalBackup();
+        renderAll();
+
+        if (state.cloudReady && state.user) {
+          await setDoc(
+            doc(state.db, "artifacts", appId, "users", state.user.uid, "threads", newThread.id),
+            newThread
+          );
+        }
+
+        if (opening) {
+          await sendMessage("85yo", { text: opening });
+        }
+      });
+
+      // Tapback & Context Popover Actions
+      $$(".tapback-choice").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (state.contextTarget) {
+            setTapback(state.contextTarget.id, btn.dataset.emoji);
+          }
+          $("#tapbackOverlay").classList.add("hidden");
+          $("#tapbackOverlay").classList.remove("flex");
+        });
+      });
+
+      $("#ctxReplyBtn").addEventListener("click", () => {
+        if (state.contextTarget) {
+          const targetRole = state.contextTarget.sender === "85yo" ? "present" : "85yo";
+          state.replyingTo[targetRole] = state.contextTarget;
+          $(`#replyBannerText-${targetRole}`).textContent = state.contextTarget.text || "Attachment";
+          $(`#replyBanner-${targetRole}`).classList.remove("hidden");
+          $(`#chatInput-${targetRole}`).focus();
+        }
+        $("#tapbackOverlay").classList.add("hidden");
+        $("#tapbackOverlay").classList.remove("flex");
+      });
+
+      $("#ctxCopyBtn").addEventListener("click", () => {
+        if (state.contextTarget && state.contextTarget.text) {
+          navigator.clipboard?.writeText(state.contextTarget.text);
+        }
+        $("#tapbackOverlay").classList.add("hidden");
+        $("#tapbackOverlay").classList.remove("flex");
+      });
+
+      $("#ctxDeleteBtn").addEventListener("click", () => {
+        if (state.contextTarget) {
+          deleteMessage(state.contextTarget.id);
+        }
+        $("#tapbackOverlay").classList.add("hidden");
+        $("#tapbackOverlay").classList.remove("flex");
+      });
+
+      $("#ctxCancelBtn").addEventListener("click", () => {
+        $("#tapbackOverlay").classList.add("hidden");
+        $("#tapbackOverlay").classList.remove("flex");
+      });
+
+      // Media File Handlers
+      const handleImagePick = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const compressed = await compressImageFile(file);
+        await sendMessage(state.activeMediaRole, { imageUrl: compressed });
+        e.target.value = "";
+      };
+
+      $("#filePhotoInput").addEventListener("change", handleImagePick);
+      $("#fileCameraInput").addEventListener("change", handleImagePick);
+
+      $("#fileAudioInput").addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        await sendMessage(state.activeMediaRole, { audioName: file.name });
+        e.target.value = "";
+      });
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
